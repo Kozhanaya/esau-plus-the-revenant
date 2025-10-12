@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-model href="https://wofsauge.github.io/isaac-xml-validator/xsd/metadata.xsd" ?>
+<metadata>
+  <name>esau-plus-the-revenant</name>
+  <directory>esau-plus-the-revenant</directory>
+  <description>esau-plus-the-revenant is a currently a work in progress.</description>
+  <version>1.0</version>
+  <visibility />
+</metadata>
