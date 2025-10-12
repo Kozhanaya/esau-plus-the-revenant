@@ -1,22 +1,24 @@
 import { ModCallback } from "isaac-typescript-definitions";
-import { name } from "../package.json";
 import { OnPostPlayerInit } from "./callbacks/post_player_init";
+import { mod } from "./mod";
+import { characters } from "./enums";
+import { esauDefaultStats } from "./characters/esau";
+import { revenantDefaultStats } from "./characters/the_revenant";
+import { onEvaluateCache } from "./callbacks/evaluate_cache";
+import { onPostFireTear } from "./callbacks/post_fire_tear";
 
-// This function is run when your mod first initializes.
 export function main(): void {
-  // Instantiate a new mod object, which grants the ability to add callback functions that
-  // correspond to in-game events.
-  const mod = RegisterMod(name, 1);
-
-  // Register a callback function that corresponds to when a new player is initialized.
-  mod.AddCallback(ModCallback.POST_PLAYER_INIT, postPlayerInit);
-
-  // Print a message to the "log.txt" file.
-  Isaac.DebugString(`${name} initialized.`);
-
-  mod.AddCallback(ModCallback.POST_PLAYER_INIT, OnPostPlayerInit);
+  registerAllCharacterStats();
+  addCallbacks();
 }
 
-function postPlayerInit() {
-  Isaac.DebugString("Callback fired: POST_PLAYER_INIT");
+function registerAllCharacterStats() {
+  mod.registerCharacterStats(characters.ESAU, esauDefaultStats);
+  mod.registerCharacterStats(characters.THE_REVENANT, revenantDefaultStats);
+}
+
+function addCallbacks() {
+  mod.AddCallback(ModCallback.POST_PLAYER_INIT, OnPostPlayerInit);
+  mod.AddCallback(ModCallback.EVALUATE_CACHE, onEvaluateCache);
+  mod.AddCallback(ModCallback.POST_FIRE_TEAR, onPostFireTear);
 }
