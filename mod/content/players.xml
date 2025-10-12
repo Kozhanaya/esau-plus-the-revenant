@@ -1,0 +1,27 @@
+<players nameimageroot="gfx/ui/boss/" portraitroot="gfx/ui/stage/" root="gfx/characters/costumes/">
+  <player 
+  	hp="2"
+  	armor="2"
+  	name="Esau" 
+  	nameimage="PlayerName_esau.png" 
+  	portrait="PlayerPortrait_Esau.png" 
+  	skin="Character_Esau.png" 
+  	skinColor="3"
+  	birthright="Test 1"
+    items="580"
+  />
+
+  <player 
+  	hp="0"
+  	black="6"
+  	name="The Revenant" 
+  	nameimage="PlayerName_revenant.png" 
+		portrait="playerportrait_revenant.png"
+  	skin="character_revenant.png" 
+  	skinColor="1" 
+  	bSkinParent="Esau"
+  	birthright="Anger floods your mind"
+  	canShoot="false"
+		costumeSuffix="revenant"
+  />
+</players>

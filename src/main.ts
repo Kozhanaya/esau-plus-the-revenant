@@ -1,5 +1,6 @@
 import { ModCallback } from "isaac-typescript-definitions";
 import { name } from "../package.json";
+import { OnPostPlayerInit } from "./callbacks/post_player_init";
 
 // This function is run when your mod first initializes.
 export function main(): void {
@@ -12,6 +13,8 @@ export function main(): void {
 
   // Print a message to the "log.txt" file.
   Isaac.DebugString(`${name} initialized.`);
+
+  mod.AddCallback(ModCallback.POST_PLAYER_INIT, OnPostPlayerInit);
 }
 
 function postPlayerInit() {
