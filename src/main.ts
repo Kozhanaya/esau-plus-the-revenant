@@ -1,4 +1,4 @@
-import { ModCallback } from "isaac-typescript-definitions";
+import { HeartSubType, ModCallback } from "isaac-typescript-definitions";
 import { OnPostPlayerInit } from "./callbacks/post_player_init";
 import { mod } from "./mod";
 import { characters } from "./enums";
@@ -8,13 +8,14 @@ import { onEvaluateCache } from "./callbacks/evaluate_cache";
 import { onPostFireTear } from "./callbacks/post_fire_tear";
 
 export function main(): void {
-  registerAllCharacterStats();
+  registerAllCharacters();
   addCallbacks();
 }
 
-function registerAllCharacterStats() {
+function registerAllCharacters() {
   mod.registerCharacterStats(characters.ESAU, esauDefaultStats);
   mod.registerCharacterStats(characters.THE_REVENANT, revenantDefaultStats);
+  mod.registerCharacterHealthConversion(characters.THE_REVENANT, HeartSubType.BLACK);
 }
 
 function addCallbacks() {
