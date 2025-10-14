@@ -1,7 +1,9 @@
-import { CacheFlag } from "isaac-typescript-definitions";
+import { CacheFlag, ModCallback } from "isaac-typescript-definitions";
 import { characters } from "../enums";
 import { changeTearVariantToBlood } from "../functions";
+import { Callback, ModFeature } from "isaacscript-common";
 
+// variables
 const hairCostume = Isaac.GetCostumeIdByPath("gfx/characters/character_esau_hair.anm2");
 
 export const esauDefaultStats = new Map<CacheFlag, number>([
@@ -12,17 +14,41 @@ export const esauDefaultStats = new Map<CacheFlag, number>([
   [CacheFlag.LUCK, -1],
 ]);
 
-export function addEsauHairCostume(player: EntityPlayer): void {
-  if(player.GetPlayerType() !== characters.ESAU) { return; }
+
+
+// getters
+function isPlayerEsau(player: EntityPlayer): boolean {
+  return player.GetPlayerType() === characters.ESAU;
+}
+
+
+
+// functions
+function addEsauHairCostume(player: EntityPlayer) {
+  if(!isPlayerEsau(player)) { return; }
 
   player.AddNullCostume(hairCostume);
 }
 
-export function changeEsauTearVariant(tear: EntityTear): void {
+function changeEsauTearVariant(tear: EntityTear) {
   const player = tear.Parent?.ToPlayer();
 
   if(!player) { return; }
-  if(player.GetPlayerType() !== characters.ESAU) { return; }
+  if(!isPlayerEsau(player)) { return; }
 
   changeTearVariantToBlood(tear);
+}
+
+
+
+export class Esau extends ModFeature {
+  @Callback(ModCallback.POST_FIRE_TEAR)
+  onPostFireTear(tear: EntityTear): void {
+    changeEsauTearVariant(tear);
+  }
+
+  @Callback(ModCallback.POST_PLAYER_INIT)
+  onPostPlayerInit(player: EntityPlayer): void {
+    addEsauHairCostume(player);
+  }
 }
