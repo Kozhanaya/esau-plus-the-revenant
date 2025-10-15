@@ -6,7 +6,8 @@ import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, MAX_PLAY
 import { changeTearVariantToBlood } from "../functions";
 
 // variables
-const dashAcceleration = 45; // the speed added when dashing
+const contactDamageCooldown = 10;
+const dashAcceleration = 35; // the speed added when dashing
 const defaultContactDamage = 10;
 const defaultDashCooldown = 60; // frames
 const defaultDashDamage = 25;
@@ -23,26 +24,40 @@ const v = {
     nextDashFrame: new DefaultMap<PlayerIndex, int>(0),
     dashCooldown: new DefaultMap<PlayerIndex, int>(defaultDashCooldown),
   },
+  room: {
+    entityNextContactDamageFrame: new DefaultMap<PtrHash, int>(0),
+  },
 };
 
 
 
 // getters
-function canRevenantDash(player: EntityPlayer): boolean {
-  if(Game().GetFrameCount() < getNextDashFrame(player)) { return false; }
+function canEntityTakeContactDamage(entity: Entity): boolean {
+  return GetGameFrameCount() > getEntityNextContactDamageFrame(entity);
+}
 
-  return true;
+function canRevenantDash(player: EntityPlayer): boolean {
+  return GetGameFrameCount() > getNextDashFrame(player)
 }
 
 function canRevenantDealContactDamage(player: EntityPlayer): boolean {
-  if (
-    player.Velocity.X < minVelocityForContactDamage &&
-    player.Velocity.X > -minVelocityForContactDamage &&
-    player.Velocity.Y < minVelocityForContactDamage &&
-    player.Velocity.Y > -minVelocityForContactDamage
-  ) { return false; }
+  return (
+    player.Velocity.X >= minVelocityForContactDamage ||
+    player.Velocity.X <= -minVelocityForContactDamage ||
+    player.Velocity.Y >= minVelocityForContactDamage ||
+    player.Velocity.Y <= -minVelocityForContactDamage
+  );
+}
 
-  return true;
+function getEntityNextContactDamageFrame(entity: Entity) {
+  const ptrHash = GetPtrHash(entity);
+  const entityNextContactDamageFrame = v.room.entityNextContactDamageFrame.getAndSetDefault(ptrHash);
+
+  return entityNextContactDamageFrame;
+}
+
+function GetGameFrameCount() {
+  return Game().GetFrameCount();
 }
 
 function getNextDashFrame(player: EntityPlayer) {
@@ -57,14 +72,12 @@ function isPlayerRevenant(player: EntityPlayer): boolean {
 }
 
 function isRevenantDashing(player: EntityPlayer): boolean {
-  if(
+  return (
     player.Velocity.X > MAX_PLAYER_SPEED_IN_UNITS ||
     player.Velocity.X < -MAX_PLAYER_SPEED_IN_UNITS ||
     player.Velocity.Y > MAX_PLAYER_SPEED_IN_UNITS ||
     player.Velocity.Y < -MAX_PLAYER_SPEED_IN_UNITS
-  ) { return true; }
-
-  return false;
+  );
 }
 
 function shouldRevenantTakeDamage(player: EntityPlayer, source: EntityRef) {
@@ -150,7 +163,7 @@ function notifyDashReadiness() {
   for(let i = 0; i < Game().GetNumPlayers(); i++) {
     const player = Isaac.GetPlayer(i);
 
-    if(getNextDashFrame(player) !== Game().GetFrameCount()) { return; }
+    if(getNextDashFrame(player) !== GetGameFrameCount()) { return; }
 
     initDashReadyGFX(player);
     playDashReadySFX();
@@ -170,7 +183,12 @@ function setDashCooldown(player: EntityPlayer) {
   const playerIndex = getPlayerIndex(player);
   const cooldownDuration = v.run.dashCooldown.getAndSetDefault(playerIndex);
 
-  v.run.nextDashFrame.set(playerIndex, Game().GetFrameCount() + cooldownDuration);
+  v.run.nextDashFrame.set(playerIndex, GetGameFrameCount() + cooldownDuration);
+}
+
+function setEntityNextContactDamageFrame(entity: Entity) {
+  const ptrHash = GetPtrHash(entity);
+  v.room.entityNextContactDamageFrame.set(ptrHash, GetGameFrameCount() + contactDamageCooldown);
 }
 
 
@@ -198,9 +216,11 @@ export class TheRevenant extends ModFeature {
   @Callback(ModCallback.PRE_PLAYER_COLLISION)
   onPrePlayerCollision(player: EntityPlayer, collider: Entity, low: boolean): boolean | undefined {
     if(!low) { return undefined; }
+    if(!canEntityTakeContactDamage(collider)) { return undefined; }
 
     applyContactDamage(player, collider);
     applyDashDamage(player, collider);
+    setEntityNextContactDamageFrame(collider);
 
     return undefined;
   }
