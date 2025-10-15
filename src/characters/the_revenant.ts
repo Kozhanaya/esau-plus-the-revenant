@@ -2,7 +2,7 @@ import type {ButtonAction} from "isaac-typescript-definitions";
 import { CacheFlag, TearFlag, InputHook, ModCallback, SoundEffect, EntityType, DamageFlag } from "isaac-typescript-definitions";
 import { characters, defaultControls } from "../enums";
 import type { PlayerIndex } from "isaacscript-common";
-import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager } from "isaacscript-common";
+import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, hasFlag, isSelfDamage, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager } from "isaacscript-common";
 import { changeTearVariantToBlood } from "../functions";
 
 // variables
@@ -13,6 +13,20 @@ const defaultDashCooldown = 60; // frames
 const defaultDashDamage = 25;
 const hairCostume = Isaac.GetCostumeIdByPath("gfx/characters/character_revenant_hair.anm2");
 const minVelocityForContactDamage = 3.2;
+const unavoidableDamageSources = new Set([EntityType.PROJECTILE, EntityType.SLOT]);
+const unavoidableDamageFlags = new Set([
+  DamageFlag.LASER,
+  DamageFlag.CURSED_DOOR,
+  DamageFlag.EXPLOSION,
+  DamageFlag.CRUSH,
+  DamageFlag.RED_HEARTS,
+  DamageFlag.POOP,
+  DamageFlag.TNT,
+  DamageFlag.INVINCIBLE,
+  DamageFlag.IV_BAG,
+  DamageFlag.CHEST,
+  DamageFlag.SPIKES,
+]);
 
 export const revenantDefaultStats = new Map<CacheFlag, number>([
   [CacheFlag.SPEED, 1.3],
@@ -49,6 +63,16 @@ function canRevenantDealContactDamage(player: EntityPlayer): boolean {
   );
 }
 
+function doesPlayerHaveDamageFlag(flags: BitFlags<DamageFlag>, flagsToCheck: ReadonlySet<DamageFlag>): boolean {
+  for(const flagToCheck of flagsToCheck) {
+    if(hasFlag(flags, flagToCheck)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function getEntityNextContactDamageFrame(entity: Entity) {
   const ptrHash = GetPtrHash(entity);
   const entityNextContactDamageFrame = v.room.entityNextContactDamageFrame.getAndSetDefault(ptrHash);
@@ -80,10 +104,17 @@ function isRevenantDashing(player: EntityPlayer): boolean {
   );
 }
 
-function shouldRevenantTakeDamage(player: EntityPlayer, source: EntityRef) {
+function shouldRevenantTakeDamage(player: EntityPlayer, damageFlags: BitFlags<DamageFlag>, source: EntityRef) {
+  if(!isPlayerRevenant(player)) { return undefined; }
   if(source.Type === EntityType.FIREPLACE) { return false; }
   if(isRevenantDashing(player)) { return false; }
-  if(canRevenantDealContactDamage(player)) { return false; }
+
+  if(
+    canRevenantDealContactDamage(player) &&
+    !unavoidableDamageSources.has(source.Type) &&
+    !doesPlayerHaveDamageFlag(damageFlags, unavoidableDamageFlags) &&
+    !isSelfDamage(damageFlags)
+  ) { return false; }
 
   return true;
 }
@@ -198,7 +229,7 @@ export class TheRevenant extends ModFeature {
 
   @CallbackCustom(ModCallbackCustom.ENTITY_TAKE_DMG_PLAYER)
   onEntityTakeDamage(player: EntityPlayer, amount: float, damageFlags: BitFlags<DamageFlag>, source: EntityRef, countdownFrames: int): boolean | undefined {
-    return shouldRevenantTakeDamage(player, source);
+    return shouldRevenantTakeDamage(player, damageFlags, source);
   }
 
   @Callback(ModCallback.EVALUATE_CACHE)
