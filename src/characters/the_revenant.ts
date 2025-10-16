@@ -7,7 +7,7 @@ import { changeTearVariantToBlood } from "../functions";
 
 // variables
 const contactDamageCooldown = 10;
-const dashAcceleration = 35; // the speed added when dashing
+const dashAcceleration = 30; // the speed added when dashing
 const defaultContactDamage = 10;
 const defaultDashCooldown = 60; // frames
 const defaultDashDamage = 25;
@@ -134,11 +134,15 @@ function applyContactDamage(player: EntityPlayer, collider: Entity) {
   applyDamageToEntity(defaultContactDamage, player, collider);
 }
 
+function applyContactEffectsToEntity(player: EntityPlayer, entity: Entity) {
+  if(!entity.IsVulnerableEnemy()) { return; }
+
+  entity.AddBurn(EntityRef(player), 100, 5);
+}
+
 function applyDamageToEntity(amount: number, player: EntityPlayer, entity: Entity) {
   if(!entity.IsVulnerableEnemy()) { return; }
 
-  player.Mass = 5000;
-  entity.Mass = 1;
   entity.TakeDamage(amount, DamageFlag.COUNTDOWN, EntityRef(player), 0)
 }
 
@@ -249,6 +253,7 @@ export class TheRevenant extends ModFeature {
     if(!low) { return undefined; }
     if(!canEntityTakeContactDamage(collider)) { return undefined; }
 
+    applyContactEffectsToEntity(player, collider);
     applyContactDamage(player, collider);
     applyDashDamage(player, collider);
     setEntityNextContactDamageFrame(collider);
