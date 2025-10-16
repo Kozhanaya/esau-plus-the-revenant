@@ -8,6 +8,7 @@ import { changeTearVariantToBlood } from "../functions";
 // variables
 const contactDamageCooldown = 10;
 const dashAcceleration = 30; // the speed added when dashing
+const dashIFrames = 60;
 const defaultContactDamage = 10;
 const defaultDashCooldown = 60; // frames
 const defaultDashDamage = 25;
@@ -162,6 +163,7 @@ function changeRevenantTearVariant(tear: EntityTear) {
 
 function dash(player: EntityPlayer) {
   player.Velocity = player.Velocity.Resized(dashAcceleration);
+  player.SetMinDamageCooldown(dashIFrames);
 }
 
 function evaluateRevenantCache(player: EntityPlayer, cacheFlag: CacheFlag) {
