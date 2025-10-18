@@ -130,6 +130,7 @@ function addRevenantHairCostume(player: EntityPlayer) {
 
 function applyContactDamage(player: EntityPlayer, collider: Entity) {
   if(!canRevenantDealContactDamage(player)) { return; }
+  if(!canEntityTakeContactDamage(collider)) { return; }
 
   applyDamageToEntity(defaultContactDamage, player, collider);
 }
@@ -251,15 +252,14 @@ export class TheRevenant extends ModFeature {
 
   @Callback(ModCallback.PRE_PLAYER_COLLISION)
   onPrePlayerCollision(player: EntityPlayer, collider: Entity, low: boolean): boolean | undefined {
-    if(!low) { return undefined; }
-    if(!canEntityTakeContactDamage(collider)) { return undefined; }
+    if(!low) { return false; }
+    if(collider.Type === EntityType.FIREPLACE) { return true; }
 
     applyContactEffectsToEntity(player, collider);
     applyContactDamage(player, collider);
-    applyDashDamage(player, collider);
     setEntityNextContactDamageFrame(collider);
 
-    return undefined;
+    return canRevenantDealContactDamage(player);
   }
 
   @Callback(ModCallback.POST_FIRE_TEAR)
