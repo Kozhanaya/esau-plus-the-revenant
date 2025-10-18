@@ -1,5 +1,5 @@
 import type {ButtonAction} from "isaac-typescript-definitions";
-import { CacheFlag, TearFlag, InputHook, ModCallback, SoundEffect, EntityType, DamageFlag } from "isaac-typescript-definitions";
+import { UseFlag, CollectibleType, CacheFlag, TearFlag, InputHook, ModCallback, SoundEffect, EntityType, DamageFlag } from "isaac-typescript-definitions";
 import { characters, defaultControls } from "../enums";
 import type { PlayerIndex } from "isaacscript-common";
 import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, hasFlag, isSelfDamage, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager } from "isaacscript-common";
@@ -7,7 +7,6 @@ import { changeTearVariantToBlood } from "../functions";
 
 // variables
 const contactDamageCooldown = 10;
-const dashAcceleration = 30; // the speed added when dashing
 const dashIFrames = 60;
 const defaultContactDamage = 10;
 const defaultDashCooldown = 60; // frames
@@ -162,7 +161,7 @@ function changeRevenantTearVariant(tear: EntityTear) {
 }
 
 function dash(player: EntityPlayer) {
-  player.Velocity = player.Velocity.Resized(dashAcceleration);
+  player.UseActiveItem(CollectibleType.MARS, UseFlag.NO_COSTUME);
   player.SetMinDamageCooldown(dashIFrames);
 }
 
