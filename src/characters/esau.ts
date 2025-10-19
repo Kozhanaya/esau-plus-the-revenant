@@ -1,4 +1,5 @@
-import { CacheFlag, ModCallback } from "isaac-typescript-definitions";
+import { CacheFlag, CollectibleType, ModCallback  } from "isaac-typescript-definitions";
+import type {UseFlag} from "isaac-typescript-definitions";
 import { characters } from "../enums";
 import { changeTearVariantToBlood } from "../functions";
 import { Callback, ModFeature } from "isaacscript-common";
@@ -50,5 +51,21 @@ export class Esau extends ModFeature {
   @Callback(ModCallback.POST_PLAYER_INIT)
   onPostPlayerInit(player: EntityPlayer): void {
     addEsauHairCostume(player);
+  }
+
+  @Callback(ModCallback.POST_USE_ITEM)
+  onPostUseItem(
+    collectibleType: CollectibleType,
+    rng: RNG,
+    player: EntityPlayer,
+    useFlags: BitFlags<UseFlag>,
+    activeSlot: int,
+    customVarData: int,
+  ): boolean | undefined {
+
+    if(collectibleType !== CollectibleType.D4 && collectibleType !== CollectibleType.D100) { return undefined; }
+    if(isPlayerEsau(player)) { addEsauHairCostume(player); }
+
+    return true;
   }
 }

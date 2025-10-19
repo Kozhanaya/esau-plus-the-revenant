@@ -315,4 +315,20 @@ export class TheRevenant extends ModFeature {
     notifyDashReadiness();
     initDeathAnimation();
   }
+
+  @Callback(ModCallback.POST_USE_ITEM)
+  onPostUseItem(
+    collectibleType: CollectibleType,
+    rng: RNG,
+    player: EntityPlayer,
+    useFlags: BitFlags<UseFlag>,
+    activeSlot: int,
+    customVarData: int,
+  ): boolean | undefined {
+
+    if(collectibleType !== CollectibleType.D4 && collectibleType !== CollectibleType.D100) { return undefined; }
+    if(isPlayerRevenant(player)) { addRevenantHairCostume(player); }
+
+    return true;
+  }
 }
