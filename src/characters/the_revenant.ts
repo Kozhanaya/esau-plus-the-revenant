@@ -1,9 +1,14 @@
 import type {ButtonAction} from "isaac-typescript-definitions";
-import { UseFlag, CollectibleType, CacheFlag, TearFlag, InputHook, ModCallback, SoundEffect, EntityType, DamageFlag } from "isaac-typescript-definitions";
+import { UseFlag, CollectibleType, CacheFlag, TearFlag, InputHook, ModCallback, SoundEffect, EntityType, DamageFlag, EntityFlag } from "isaac-typescript-definitions";
 import { characters, defaultControls } from "../enums";
 import type { PlayerIndex } from "isaacscript-common";
-import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, hasFlag, isSelfDamage, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager } from "isaacscript-common";
+import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, hasFlag, isSelfDamage, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager, spawn } from "isaacscript-common";
 import { changeTearVariantToBlood } from "../functions";
+import { RevenantData } from "../classes/revenant-data";
+import { mod } from "../mod";
+
+// classes
+mod.saveDataManagerRegisterClass(RevenantData);
 
 // variables
 const contactDamageCooldown = 10;
@@ -37,6 +42,7 @@ const v = {
   run: {
     nextDashFrame: new DefaultMap<PlayerIndex, int>(0),
     dashCooldown: new DefaultMap<PlayerIndex, int>(defaultDashCooldown),
+    revenantData: new DefaultMap<PlayerIndex, RevenantData>(() => new RevenantData),
   },
   room: {
     entityNextContactDamageFrame: new DefaultMap<PtrHash, int>(0),
@@ -196,6 +202,40 @@ function initDashReadyGFX(player: EntityPlayer) {
 	player.SetColor(Color(1, 1, 1, 1, 1, 0, 0), 3, -1, true, false)
 }
 
+function initDeathAnimation() {
+  for(let i = 0; i < Game().GetNumPlayers(); i++) {
+    const player = Isaac.GetPlayer(i);
+
+    if(!isPlayerRevenant(player)) { return; }
+
+    const playerIndex = getPlayerIndex(player);
+    const revenantData = v.run.revenantData.getAndSetDefault(playerIndex);
+
+    if(player.IsDead()) {
+      player.Visible &&= false;
+
+      if(!revenantData.isDying) {
+        revenantData.isDying = true;
+
+        const deadRevenant = spawn(Isaac.GetEntityTypeByName("Dead Revenant"), 0, 0, player.Position);
+        deadRevenant.Parent = player;
+        deadRevenant.ClearEntityFlags(EntityFlag.APPEAR);
+
+        const deadRevenantSprite = deadRevenant.GetSprite();
+        deadRevenantSprite.Play("Death", true);
+        revenantData.pitOpenSoundSFXStart = GetGameFrameCount() + 5;
+        revenantData.deathExplosionStart = GetGameFrameCount() + 32;
+      }
+
+      const room = Game().GetRoom();
+
+      if(revenantData.pitOpenSoundSFXStart === GetGameFrameCount()) { sfxManager.Play(SoundEffect.DARK_ESAU_DEATH_OPEN); }
+      if(revenantData.deathExplosionStart === GetGameFrameCount()) { room.MamaMegaExplosion(player.Position); }
+
+    } else { revenantData.isDying &&= false; }
+  }
+}
+
 function notifyDashReadiness() {
   for(let i = 0; i < Game().GetNumPlayers(); i++) {
     const player = Isaac.GetPlayer(i);
@@ -275,5 +315,6 @@ export class TheRevenant extends ModFeature {
   @Callback(ModCallback.POST_UPDATE)
   onPostUpdate(): void {
     notifyDashReadiness();
+    initDeathAnimation();
   }
 }

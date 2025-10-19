@@ -1,0 +1,5 @@
+<entities  anm2root="gfx/characters/death/" version="5">
+	<entity name="Dead Revenant" anm2path="revenant_death.anm2" shieldStrength="0" variant="0" baseHP="0" boss="" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="13" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" tags="noreroll">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
+</entities>
