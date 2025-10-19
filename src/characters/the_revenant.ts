@@ -40,8 +40,6 @@ export const revenantDefaultStats = new Map<CacheFlag, number>([
 
 const v = {
   run: {
-    nextDashFrame: new DefaultMap<PlayerIndex, int>(0),
-    dashCooldown: new DefaultMap<PlayerIndex, int>(defaultDashCooldown),
     revenantData: new DefaultMap<PlayerIndex, RevenantData>(() => new RevenantData),
   },
   room: {
@@ -92,9 +90,9 @@ function GetGameFrameCount() {
 
 function getNextDashFrame(player: EntityPlayer) {
   const playerIndex = getPlayerIndex(player);
-  const nextDashFrame = v.run.nextDashFrame.getAndSetDefault(playerIndex);
+  const revenantData = v.run.revenantData.getAndSetDefault(playerIndex);
 
-  return nextDashFrame;
+  return revenantData.nextDashFrame;
 }
 
 function isPlayerRevenant(player: EntityPlayer): boolean {
@@ -258,9 +256,9 @@ function playDashSFX() {
 
 function setDashCooldown(player: EntityPlayer) {
   const playerIndex = getPlayerIndex(player);
-  const cooldownDuration = v.run.dashCooldown.getAndSetDefault(playerIndex);
+  const revenantData = v.run.revenantData.getAndSetDefault(playerIndex);
 
-  v.run.nextDashFrame.set(playerIndex, GetGameFrameCount() + cooldownDuration);
+  revenantData.nextDashFrame = GetGameFrameCount() + revenantData.dashCooldown;
 }
 
 function setEntityNextContactDamageFrame(entity: Entity) {
