@@ -2,7 +2,7 @@ import type {ButtonAction} from "isaac-typescript-definitions";
 import { UseFlag, CollectibleType, CacheFlag, TearFlag, InputHook, ModCallback, SoundEffect, EntityType, DamageFlag, EntityFlag } from "isaac-typescript-definitions";
 import { characters, defaultControls } from "../enums";
 import type { PlayerIndex } from "isaacscript-common";
-import { addFlag, Callback, CallbackCustom, DefaultMap, getPlayerIndex, hasFlag, isSelfDamage, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager, spawn } from "isaacscript-common";
+import { addFlag, Callback, CallbackCustom, DefaultMap, getEntities, getPlayerIndex, hasFlag, isSelfDamage, MAX_PLAYER_SPEED_IN_UNITS, ModCallbackCustom, ModFeature, sfxManager, spawn } from "isaacscript-common";
 import { changeTearVariantToBlood } from "../functions";
 import { RevenantData } from "../classes/revenant-data";
 import { mod } from "../mod";
@@ -266,6 +266,19 @@ function setEntityNextContactDamageFrame(entity: Entity) {
   v.room.entityNextContactDamageFrame.set(ptrHash, GetGameFrameCount() + contactDamageCooldown);
 }
 
+function spawnBlueFireplace() {
+  const willos = getEntities(EntityType.WILLO);
+  if(willos.length === 0) { return; }
+
+  const firePlaces = getEntities(EntityType.FIREPLACE);
+  if(firePlaces.length > 0) { return; }
+
+  const room = Game().GetRoom();
+  const freeTile = room.FindFreeTilePosition(room.GetCenterPos(), 0);
+
+  spawn(EntityType.FIREPLACE, 2, 0, freeTile);
+}
+
 
 
 export class TheRevenant extends ModFeature {
@@ -314,6 +327,7 @@ export class TheRevenant extends ModFeature {
   onPostUpdate(): void {
     notifyDashReadiness();
     initDeathAnimation();
+    spawnBlueFireplace();
   }
 
   @Callback(ModCallback.POST_USE_ITEM)
